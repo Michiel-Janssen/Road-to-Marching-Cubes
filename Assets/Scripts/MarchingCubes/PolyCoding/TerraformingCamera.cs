@@ -39,7 +39,7 @@ public class TerraformingCamera : MonoBehaviour
 
             _hitPoint = hit.point;
 
-            print(_hitPoint.ToString());
+            hitChunk.EditWeights(_hitPoint, BrushSize, add);
         }
     }
 
