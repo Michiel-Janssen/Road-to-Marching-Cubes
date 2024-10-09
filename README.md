@@ -6,7 +6,7 @@ This repository documents my journey toward understanding and implementing the M
 The goal of this project is not only to implement Marching Cubes but also to gain a deeper understanding of its applications, mathematical foundations, and performance optimizations.
 
 ## Journey
-It started with basic understanding of the marching cube algorithm and implementating some variations of it. After that I found out about the computing shader and computing buffer idea, helping out with optimization of the big computations marching cubes will have (Putting CPU calculations on the GPU).
+It started with basic understanding of the marching cube algorithm and implementating some variations of it. After that I found out about the computing shader and computing buffer idea, helping out with optimization of the big computations marching cubes will have (Putting CPU calculations on the GPU). So I first made a little example scene where I can see the difference in FPS with computing shaders/buffers and without. Now that I understand this principle I went back to my basic marching cube implementation and mixed it with the computing shaders. After I got this working I started making a terraforming tool and fly camera to use to terraform my generated terrain. Next was implementing LOD's into it so I can start on my infinite terrain.
 
 ## Resources
 Below is a list of papers, articles, and websites that have helped me throughout this journey:
