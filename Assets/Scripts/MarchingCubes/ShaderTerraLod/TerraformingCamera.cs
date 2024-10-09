@@ -9,6 +9,8 @@ public class TerraformingCamera : MonoBehaviour
     [SerializeField] private GameObject visualIndicator;
     [Range(1,5)]
     public float BrushSize = 2f;
+    [Range(0.01f, 1)]
+    public float BrushStrength = 1f;
 
     Vector3 _hitPoint;
     Camera _cam;
@@ -92,18 +94,17 @@ public class TerraformingCamera : MonoBehaviour
 
             _hitPoint = hit.point;
 
-            hitChunk.EditWeights(_hitPoint, BrushSize, add);
+            hitChunk.EditWeights(_hitPoint, BrushSize, add, BrushStrength);
         }
     }
 
     private void Terraform(bool add, RaycastHit hit)
     {
-
         Chunk hitChunk = hit.collider.gameObject.GetComponent<Chunk>();
 
         _hitPoint = hit.point;
 
-        hitChunk.EditWeights(_hitPoint, BrushSize, add);
+        hitChunk.EditWeights(_hitPoint, BrushSize, add, BrushStrength);
     }
 
     private void OnDrawGizmos()

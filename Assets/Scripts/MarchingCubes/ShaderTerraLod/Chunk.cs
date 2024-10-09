@@ -139,7 +139,7 @@ public class Chunk : MonoBehaviour
         _weightsBuffer.Release();
     }
 
-    public void EditWeights(Vector3 hitPosition, float brushSize, bool add)
+    public void EditWeights(Vector3 hitPosition, float brushSize, bool add, float BrushStrength)
     {
         CreateBuffers();
 
@@ -152,8 +152,7 @@ public class Chunk : MonoBehaviour
         MarchingShader.SetInt("_ChunkSize", GridMetrics.PointsPerChunk(GridMetrics.LastLod));
         MarchingShader.SetVector("_HitPosition", hitPosition);
         MarchingShader.SetFloat("_BrushSize", brushSize);
-
-        MarchingShader.SetFloat("_TerraformStrength", add ? 1f : -1f);
+        MarchingShader.SetFloat("_TerraformStrength", add ? BrushStrength : -BrushStrength);
 
         MarchingShader.Dispatch(kernel, GridMetrics.ThreadGroups(GridMetrics.LastLod), GridMetrics.ThreadGroups(GridMetrics.LastLod), GridMetrics.ThreadGroups(GridMetrics.LastLod));
 
