@@ -4,6 +4,10 @@ using UnityEngine;
 
 public class TerraformingCamera : MonoBehaviour
 {
+    [SerializeField] private bool useVisual;
+
+    [SerializeField] private GameObject visualIndicator;
+    [Range(1,5)]
     public float BrushSize = 2f;
 
     Vector3 _hitPoint;
@@ -14,15 +18,64 @@ public class TerraformingCamera : MonoBehaviour
         _cam = GetComponent<Camera>();
     }
 
+    private void Update()
+    {
+        if (useVisual)
+        {
+            float scaleFactor = BrushSize * 1.5f;
+            visualIndicator.transform.localScale = new Vector3(scaleFactor, scaleFactor, scaleFactor);
+        }
+
+        if (Input.GetKeyDown(KeyCode.UpArrow))
+        {
+            BrushSize = Mathf.Min(5, BrushSize + 1);
+        }
+        else if (Input.GetKeyDown(KeyCode.DownArrow))
+        {
+            BrushSize = Mathf.Max(1, BrushSize - 1);
+        }
+    }
+
     private void LateUpdate()
     {
-        if (Input.GetMouseButton(0))
+        if(!useVisual)
         {
-            Terraform(true);
+            if (Input.GetMouseButton(0))
+            {
+                Terraform(true);
+            }
+            else if (Input.GetMouseButton(1))
+            {
+                Terraform(false);
+            }
         }
-        else if (Input.GetMouseButton(1))
+        else
         {
-            Terraform(false);
+            bool hasHit = false;
+            RaycastHit hit;
+            if (Physics.Raycast(_cam.ScreenPointToRay(Input.mousePosition),
+                out hit, 1000, 7))
+            {
+                hasHit = true;
+                visualIndicator.transform.position = hit.point;
+                visualIndicator.SetActive(true);
+            }
+            else
+            {
+                hasHit = false;
+                visualIndicator.SetActive(false);
+            }
+
+            if (Input.GetMouseButton(0))
+            {
+                if (!hasHit) return;
+                Terraform(true, hit);
+            }
+            else if (Input.GetMouseButton(1))
+            {
+                if (!hasHit) return;
+                Terraform(false, hit);
+            }
         }
     }
 
@@ -41,6 +94,16 @@ public class TerraformingCamera : MonoBehaviour
 
             hitChunk.EditWeights(_hitPoint, BrushSize, add);
         }
+    }
+
+    private void Terraform(bool add, RaycastHit hit)
+    {
+
+        Chunk hitChunk = hit.collider.gameObject.GetComponent<Chunk>();
+
+        _hitPoint = hit.point;
+
+        hitChunk.EditWeights(_hitPoint, BrushSize, add);
     }
 
     private void OnDrawGizmos()
