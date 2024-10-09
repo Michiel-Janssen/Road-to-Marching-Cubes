@@ -21,6 +21,9 @@ float _LodScaleFactor;
 
 AppendStructuredBuffer<Triangle> _Triangles;
 
+/*
+ * Function to find the exact positon on the edge for this vertex
+ */
 float3 interp(float3 edgeVertex1, float valueAtVertex1, float3 edgeVertex2, float valueAtVertex2)
 {
     return (edgeVertex1 + (_IsoLevel - valueAtVertex1) * (edgeVertex2 - edgeVertex1) / (valueAtVertex2 - valueAtVertex1));
