@@ -4,7 +4,7 @@ using UnityEngine;
 
 public class TerraformingCamera : Singleton<TerraformingCamera>
 {
-    [SerializeField] private bool useVisual;
+    public bool UseVisual;
 
     [SerializeField] private GameObject visualIndicator;
     [Range(1,5)]
@@ -22,7 +22,7 @@ public class TerraformingCamera : Singleton<TerraformingCamera>
 
     private void Update()
     {
-        if (useVisual)
+        if (UseVisual)
         {
             float scaleFactor = BrushSize * 1.5f;
             visualIndicator.transform.localScale = new Vector3(scaleFactor, scaleFactor, scaleFactor);
@@ -40,7 +40,7 @@ public class TerraformingCamera : Singleton<TerraformingCamera>
 
     private void LateUpdate()
     {
-        if(!useVisual)
+        if(!UseVisual)
         {
             if (Input.GetMouseButton(0))
             {

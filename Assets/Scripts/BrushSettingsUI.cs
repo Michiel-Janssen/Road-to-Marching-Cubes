@@ -11,6 +11,7 @@ public class BrushSettingsUI : MonoBehaviour
     [SerializeField] private Slider brushSizeSlider;
     [SerializeField] private TMP_Text brushStrengthText;
     [SerializeField] private Slider brushStrengthSlider;
+    [SerializeField] private Toggle visualToggle;
     private bool isOpen;
 
     private void Start()
@@ -22,6 +23,12 @@ public class BrushSettingsUI : MonoBehaviour
 
         brushSizeSlider.onValueChanged.AddListener(OnBrushSizeSliderValueChanged);
         brushStrengthSlider.onValueChanged.AddListener(OnBrushStrengthSliderValueChanged);
+        visualToggle.onValueChanged.AddListener(OnVisualToggleValueChanged);
+    }
+
+    private void OnVisualToggleValueChanged(bool value)
+    {
+        TerraformingCamera.Instance.UseVisual = value;
     }
 
     private void OnBrushSizeSliderValueChanged(float value)
