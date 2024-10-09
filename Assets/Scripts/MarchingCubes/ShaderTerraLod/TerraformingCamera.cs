@@ -2,7 +2,7 @@ using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
-public class TerraformingCamera : MonoBehaviour
+public class TerraformingCamera : Singleton<TerraformingCamera>
 {
     [SerializeField] private bool useVisual;
 
@@ -28,14 +28,14 @@ public class TerraformingCamera : MonoBehaviour
             visualIndicator.transform.localScale = new Vector3(scaleFactor, scaleFactor, scaleFactor);
         }
 
-        if (Input.GetKeyDown(KeyCode.UpArrow))
+/*        if (Input.GetKeyDown(KeyCode.UpArrow))
         {
             BrushSize = Mathf.Min(5, BrushSize + 1);
         }
         else if (Input.GetKeyDown(KeyCode.DownArrow))
         {
             BrushSize = Mathf.Max(1, BrushSize - 1);
-        }
+        }*/
     }
 
     private void LateUpdate()

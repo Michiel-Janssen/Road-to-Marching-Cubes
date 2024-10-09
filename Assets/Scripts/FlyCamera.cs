@@ -1,17 +1,18 @@
-using UnityEngine;
-
 /*
  * https://gist.github.com/FreyaHolmer/650ecd551562352120445513efa1d952
  */
 
+using UnityEngine;
+
 [RequireComponent(typeof(Camera))]
-public class FlyCamera : MonoBehaviour
+public class FlyCamera : Singleton<FlyCamera>
 {
     public float acceleration = 50;
     public float accSprintMultiplier = 4;
     public float lookSensitivity = 1;
     public float dampingCoefficient = 5;
     public bool focusOnEnable = true;
+    public bool inUI = false;
 
     Vector3 velocity;
 
@@ -35,9 +36,9 @@ public class FlyCamera : MonoBehaviour
     void Update()
     {
         // Input
-        if (Focused)
+        if (Focused && !inUI)
             UpdateInput();
-        else if (Input.GetMouseButtonDown(0))
+        else if (Input.GetMouseButtonDown(0) && !inUI)
             Focused = true;
 
         // Physics
@@ -83,5 +84,10 @@ public class FlyCamera : MonoBehaviour
         if (Input.GetKey(KeyCode.LeftShift))
             return direction * (acceleration * accSprintMultiplier); // "sprinting"
         return direction * acceleration; // "walking"
+    }
+
+    public void SetFocus(bool focus)
+    {
+        Focused = focus;
     }
 }
