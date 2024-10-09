@@ -16,19 +16,10 @@ public class NoiseGenerator : MonoBehaviour
 
     ComputeBuffer _weightsBuffer;
 
-    private void Awake()
-    {
-        CreateBuffers();
-    }
-    private void OnDestroy()
-    {
-        ReleaseBuffers();
-    }
-
-    void CreateBuffers()
+    void CreateBuffers(int lod)
     {
         _weightsBuffer = new ComputeBuffer(
-            GridMetrics.PointsPerChunk * GridMetrics.PointsPerChunk * GridMetrics.PointsPerChunk, sizeof(float)
+            GridMetrics.PointsPerChunk(lod) * GridMetrics.PointsPerChunk(lod) * GridMetrics.PointsPerChunk(lod), sizeof(float)
         );
     }
 
@@ -37,26 +28,32 @@ public class NoiseGenerator : MonoBehaviour
         _weightsBuffer.Release();
     }
 
-    public float[] GetNoise()
+    public float[] GetNoise(int lod)
     {
+        CreateBuffers(lod);
+
         float[] noiseValues =
-            new float[GridMetrics.PointsPerChunk * GridMetrics.PointsPerChunk * GridMetrics.PointsPerChunk];
+            new float[GridMetrics.PointsPerChunk(lod) * GridMetrics.PointsPerChunk(lod) * GridMetrics.PointsPerChunk(lod)];
 
         NoiseShader.SetBuffer(0, "_Weights", _weightsBuffer);
 
-        NoiseShader.SetInt("_ChunkSize", GridMetrics.PointsPerChunk);
+        NoiseShader.SetInt("_Scale", GridMetrics.Scale);
+        NoiseShader.SetInt("_GroundLevel", GridMetrics.GroundLevel);
+
+        NoiseShader.SetInt("_ChunkSize", GridMetrics.PointsPerChunk(lod));
         NoiseShader.SetFloat("_NoiseScale", noiseScale);
         NoiseShader.SetFloat("_Amplitude", amplitude);
         NoiseShader.SetFloat("_Frequency", frequency);
         NoiseShader.SetInt("_Octaves", octaves);
         NoiseShader.SetFloat("_GroundPercent", groundPercent);
 
-
         NoiseShader.Dispatch(
-            0, GridMetrics.PointsPerChunk / GridMetrics.NumThreads, GridMetrics.PointsPerChunk / GridMetrics.NumThreads, GridMetrics.PointsPerChunk / GridMetrics.NumThreads
+            0, GridMetrics.ThreadGroups(lod), GridMetrics.ThreadGroups(lod), GridMetrics.ThreadGroups(lod)
         );
 
         _weightsBuffer.GetData(noiseValues);
+
+        ReleaseBuffers();
 
         return noiseValues;
     }

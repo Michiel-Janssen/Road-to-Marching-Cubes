@@ -4,13 +4,13 @@ using UnityEngine;
 
 public class Chunk : MonoBehaviour
 {
+    [Range(0, 4)]
+    public int LOD;
+
     public ComputeShader MarchingShader;
     public NoiseGenerator NoiseGenerator;
     public MeshFilter MeshFilter;
     public MeshCollider MeshCollider;
-
-    [Space(10)]
-    [SerializeField] private bool drawNoiseGizmos;
 
     Mesh _mesh;
 
@@ -29,22 +29,32 @@ public class Chunk : MonoBehaviour
 
     float[] _weights;
 
-    private void Awake()
-    {
-        CreateBuffers();
-    }
-
     void Start()
     {
-        _weights = NoiseGenerator.GetNoise();
+        Create();
+    }
+
+    private void OnValidate()
+    {
+        if (Application.isPlaying)
+        {
+            Create();
+        }
+    }
+
+    void Create()
+    {
+        CreateBuffers();
+
+        if (_weights == null)
+        {
+            _weights = NoiseGenerator.GetNoise(GridMetrics.LastLod);
+        }
 
         _mesh = new Mesh();
 
         UpdateMesh();
-    }
 
-    private void OnDestroy()
-    {
         ReleaseBuffers();
     }
 
@@ -53,9 +63,9 @@ public class Chunk : MonoBehaviour
         /*
          * The 5 here is because in all the cube configuration there can be only a max of 5 triangles
          */
-        _trianglesBuffer = new ComputeBuffer(5 * (GridMetrics.PointsPerChunk * GridMetrics.PointsPerChunk * GridMetrics.PointsPerChunk), Triangle.SizeOf, ComputeBufferType.Append);
+        _trianglesBuffer = new ComputeBuffer(5 * (GridMetrics.PointsPerChunk(LOD) * GridMetrics.PointsPerChunk(LOD) * GridMetrics.PointsPerChunk(LOD)), Triangle.SizeOf, ComputeBufferType.Append);
         _trianglesCountBuffer = new ComputeBuffer(1, sizeof(int), ComputeBufferType.Raw);
-        _weightsBuffer = new ComputeBuffer(GridMetrics.PointsPerChunk * GridMetrics.PointsPerChunk * GridMetrics.PointsPerChunk, sizeof(float));
+        _weightsBuffer = new ComputeBuffer(GridMetrics.PointsPerChunk(GridMetrics.LastLod) * GridMetrics.PointsPerChunk(GridMetrics.LastLod) * GridMetrics.PointsPerChunk(GridMetrics.LastLod), sizeof(float));
     }
 
     int ReadTriangleCount()
@@ -73,13 +83,18 @@ public class Chunk : MonoBehaviour
         MarchingShader.SetBuffer(kernel, "_Triangles", _trianglesBuffer);
         MarchingShader.SetBuffer(kernel, "_Weights", _weightsBuffer);
 
-        MarchingShader.SetInt("_ChunkSize", GridMetrics.PointsPerChunk);
+        float lodScaleFactor = ((float)GridMetrics.PointsPerChunk(GridMetrics.LastLod) + 1) / (float)GridMetrics.PointsPerChunk(LOD);
+
+        MarchingShader.SetFloat("_LodScaleFactor", lodScaleFactor);
+        MarchingShader.SetInt("_ChunkSize", GridMetrics.PointsPerChunk(GridMetrics.LastLod));
+        MarchingShader.SetInt("_LODSize", GridMetrics.PointsPerChunk(LOD));
+        MarchingShader.SetInt("_Scale", GridMetrics.Scale);
         MarchingShader.SetFloat("_IsoLevel", .5f);
 
         _weightsBuffer.SetData(_weights);
         _trianglesBuffer.SetCounterValue(0);
 
-        MarchingShader.Dispatch(kernel, GridMetrics.PointsPerChunk / GridMetrics.NumThreads, GridMetrics.PointsPerChunk / GridMetrics.NumThreads, GridMetrics.PointsPerChunk / GridMetrics.NumThreads);
+        MarchingShader.Dispatch(kernel, GridMetrics.ThreadGroups(LOD), GridMetrics.ThreadGroups(LOD), GridMetrics.ThreadGroups(LOD));
 
         Triangle[] triangles = new Triangle[ReadTriangleCount()];
         _trianglesBuffer.GetData(triangles);
@@ -126,45 +141,26 @@ public class Chunk : MonoBehaviour
 
     public void EditWeights(Vector3 hitPosition, float brushSize, bool add)
     {
+        CreateBuffers();
+
         int kernel = MarchingShader.FindKernel("UpdateWeights");
 
         _weightsBuffer.SetData(_weights);
         MarchingShader.SetBuffer(kernel, "_Weights", _weightsBuffer);
 
-        MarchingShader.SetInt("_ChunkSize", GridMetrics.PointsPerChunk);
+        MarchingShader.SetInt("_Scale", GridMetrics.Scale);
+        MarchingShader.SetInt("_ChunkSize", GridMetrics.PointsPerChunk(GridMetrics.LastLod));
         MarchingShader.SetVector("_HitPosition", hitPosition);
         MarchingShader.SetFloat("_BrushSize", brushSize);
 
         MarchingShader.SetFloat("_TerraformStrength", add ? 1f : -1f);
 
-        MarchingShader.Dispatch(kernel, GridMetrics.PointsPerChunk / GridMetrics.NumThreads, GridMetrics.PointsPerChunk / GridMetrics.NumThreads, GridMetrics.PointsPerChunk / GridMetrics.NumThreads);
+        MarchingShader.Dispatch(kernel, GridMetrics.ThreadGroups(GridMetrics.LastLod), GridMetrics.ThreadGroups(GridMetrics.LastLod), GridMetrics.ThreadGroups(GridMetrics.LastLod));
 
         _weightsBuffer.GetData(_weights);
 
         UpdateMesh();
-    }
 
-    private void OnDrawGizmos()
-    {
-        if (drawNoiseGizmos)
-        {
-            if (_weights == null || _weights.Length == 0)
-            {
-                return;
-            }
-            for (int x = 0; x < GridMetrics.PointsPerChunk; x++)
-            {
-                for (int y = 0; y < GridMetrics.PointsPerChunk; y++)
-                {
-                    for (int z = 0; z < GridMetrics.PointsPerChunk; z++)
-                    {
-                        int index = x + GridMetrics.PointsPerChunk * (y + GridMetrics.PointsPerChunk * z);
-                        float noiseValue = _weights[index];
-                        Gizmos.color = Color.Lerp(Color.black, Color.white, noiseValue);
-                        Gizmos.DrawCube(new Vector3(x, y, z), Vector3.one * .2f);
-                    }
-                }
-            }
-        }
+        ReleaseBuffers();
     }
 }

@@ -16,6 +16,8 @@ struct Triangle
 float3 _HitPosition;
 float _BrushSize;
 float _TerraformStrength;
+int _LODSize;
+float _LodScaleFactor;
 
 AppendStructuredBuffer<Triangle> _Triangles;
 
@@ -30,7 +32,7 @@ void March(uint3 id : SV_DispatchThreadID)
     /*
     * Stop always 1 before (5 vertices build 4 squares) otherwise out of bounds
     */
-    if (id.x >= _ChunkSize - 1 || id.y >= _ChunkSize - 1 || id.z >= _ChunkSize - 1)
+    if (id.x >= _LODSize - 1 || id.y >= _LODSize - 1 || id.z >= _LODSize - 1)
     {
         return;
     }
@@ -39,16 +41,20 @@ void March(uint3 id : SV_DispatchThreadID)
     /*
     * Noise value of the corners of the cube
     */
+    float3 samplePos = id * _LodScaleFactor;
+
+    float unit = 1 * _LodScaleFactor;
+
     float cubeValues[8] =
     {
-        _Weights[indexFromCoord(id.x, id.y, id.z + 1)],
-       _Weights[indexFromCoord(id.x + 1, id.y, id.z + 1)],
-       _Weights[indexFromCoord(id.x + 1, id.y, id.z)],
-       _Weights[indexFromCoord(id.x, id.y, id.z)],
-       _Weights[indexFromCoord(id.x, id.y + 1, id.z + 1)],
-       _Weights[indexFromCoord(id.x + 1, id.y + 1, id.z + 1)],
-       _Weights[indexFromCoord(id.x + 1, id.y + 1, id.z)],
-       _Weights[indexFromCoord(id.x, id.y + 1, id.z)]
+        _Weights[indexFromCoord(samplePos.x, samplePos.y, samplePos.z + unit)],
+       _Weights[indexFromCoord(samplePos.x + unit, samplePos.y, samplePos.z + unit)],
+       _Weights[indexFromCoord(samplePos.x + unit, samplePos.y, samplePos.z)],
+       _Weights[indexFromCoord(samplePos.x, samplePos.y, samplePos.z)],
+       _Weights[indexFromCoord(samplePos.x, samplePos.y + unit, samplePos.z + unit)],
+       _Weights[indexFromCoord(samplePos.x + unit, samplePos.y + unit, samplePos.z + unit)],
+       _Weights[indexFromCoord(samplePos.x + unit, samplePos.y + unit, samplePos.z)],
+       _Weights[indexFromCoord(samplePos.x, samplePos.y + unit, samplePos.z)]
     };
     
     /*
@@ -95,9 +101,9 @@ void March(uint3 id : SV_DispatchThreadID)
         int e21 = edgeConnections[edges[i + 2]][1];
         
         Triangle tri;
-        tri.a = interp(cornerOffsets[e00], cubeValues[e00], cornerOffsets[e01], cubeValues[e01]) + id;
-        tri.b = interp(cornerOffsets[e10], cubeValues[e10], cornerOffsets[e11], cubeValues[e11]) + id;
-        tri.c = interp(cornerOffsets[e20], cubeValues[e20], cornerOffsets[e21], cubeValues[e21]) + id;
+        tri.a = (interp(cornerOffsets[e00], cubeValues[e00], cornerOffsets[e01], cubeValues[e01]) + id) / (_LODSize - 1) * _Scale;
+        tri.b = (interp(cornerOffsets[e10], cubeValues[e10], cornerOffsets[e11], cubeValues[e11]) + id) / (_LODSize - 1) * _Scale;
+        tri.c = (interp(cornerOffsets[e20], cubeValues[e20], cornerOffsets[e21], cubeValues[e21]) + id) / (_LODSize - 1) * _Scale;
         _Triangles.Append(tri);
     }
 }
@@ -111,7 +117,7 @@ void UpdateWeights(uint3 id : SV_DispatchThreadID)
         return;
     }
     
-    if (distance(id, _HitPosition) <= _BrushSize)
+    if (distance((float3(id) / (_ChunkSize - 1) * _Scale), _HitPosition) <= _BrushSize)
     {
         _Weights[indexFromCoord(id.x, id.y, id.z)] += _TerraformStrength;
     }
