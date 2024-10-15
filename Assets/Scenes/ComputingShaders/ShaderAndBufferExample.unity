@@ -155,7 +155,7 @@ MonoBehaviour:
   CubeShader: {fileID: 7200000, guid: 411b54eb77e055e4da1625f8b3227760, type: 3}
   CubesPerAxis: 80
   Repetitions: 3000
-  UseGPU: 1
+  UseGPU: 0
 --- !u!4 &936100957
 Transform:
   m_ObjectHideFlags: 0
