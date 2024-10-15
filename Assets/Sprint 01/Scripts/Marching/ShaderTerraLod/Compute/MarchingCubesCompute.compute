@@ -1,7 +1,7 @@
 #pragma kernel March
 #pragma kernel UpdateWeights
 
-#include "Includes\MarchingTable.hlsl"
+#include "..\..\..\..\..\Common\MarchingTable.hlsl"
 #include "MetricsCompute.compute"
 
 RWStructuredBuffer<float> _Weights;
