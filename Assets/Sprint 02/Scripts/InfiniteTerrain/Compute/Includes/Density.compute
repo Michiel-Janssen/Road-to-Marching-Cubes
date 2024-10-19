@@ -1,0 +1,12 @@
+RWStructuredBuffer<float4> weight;
+int pointsPerChunk;
+float boundsSize;
+float3 centre;
+float3 offset;
+float spacing;
+float3 worldSize;
+
+int indexFromCoord(uint x, uint y, uint z)
+{
+    return z * pointsPerChunk * pointsPerChunk + y * pointsPerChunk + x;
+}
