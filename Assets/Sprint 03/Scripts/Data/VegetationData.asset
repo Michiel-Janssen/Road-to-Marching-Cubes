@@ -14,11 +14,18 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   autoUpdate: 0
   noiseScale: 40
-  vegetationPercentage: 0.5
+  vegetationPercentage: 0.8
   seed: 0
   offset: {x: 0, y: 0}
   vegetationTypes:
   - category: Trees
     prefabs:
-    - {fileID: 5089149605608396361, guid: 24b6395a8ea6fb24186106033fe749ed, type: 3}
+    - {fileID: 7078907134251479745, guid: 915b43792ae342d4ba5fa425e86cc6f4, type: 3}
+    - {fileID: 2639178135799527569, guid: 2c71f3bb1758e824494c5a4a16c89015, type: 3}
+    - {fileID: 1358054364387221446, guid: 016dad81e5bfd3e49a340179fb4e1150, type: 3}
+    - {fileID: 5556296651694026700, guid: 19df7a28074cb284a8aa8562718310f5, type: 3}
+    - {fileID: 5541041778127469509, guid: 4bc7a3a4d2ed6974abae4e0cba00575a, type: 3}
+    - {fileID: 9046900170786976767, guid: 65926329d063fb84ea4ac2e63a6fcaa4, type: 3}
+    - {fileID: 1653678598776248653, guid: 987094f792fe9f946b536b171a0114c1, type: 3}
+    - {fileID: 1008656033906581803, guid: 47a34fcf711f1d54a9e98658458da727, type: 3}
     density: 5

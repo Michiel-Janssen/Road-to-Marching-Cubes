@@ -10,6 +10,7 @@ namespace CoffeeBytes.Week3
         public Vector2 regionSize = Vector2.one;
         public int rejectionSamples = 30;
         public float displayRadius = 1f;
+        public bool withNoise;
 
         [SerializeField] private Renderer textureRenderer;
         [SerializeField] private MeshFilter meshFilter;
@@ -22,7 +23,7 @@ namespace CoffeeBytes.Week3
         private void OnValidate()
         {
             vegetationNoiseTexture = GenerateVegetationTexture(100, 100, 40, 0.55f, 2, new Vector2(0, 0));
-            points = PoissonDiscSampling.GeneratePoints(radius, regionSize, vegetationNoiseTexture, rejectionSamples);
+            points = PoissonDiscSampling.GeneratePoints(radius, regionSize, vegetationNoiseTexture, withNoise, rejectionSamples);
             textureRenderer.sharedMaterial.mainTexture = vegetationNoiseTexture;
             textureRenderer.transform.localScale = new Vector3(vegetationNoiseTexture.width, 1, vegetationNoiseTexture.height);
         }

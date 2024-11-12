@@ -559,7 +559,7 @@ MonoBehaviour:
   noiseAmplitude: 4
   useGroundLevel: 1
   groundLevel: 0.2
-  useMarchDelay: 1
+  useMarchDelay: 0
   marchSpeedInSeconds: 0.05
   MeshFilter: {fileID: 1500236185}
 --- !u!4 &1878327869

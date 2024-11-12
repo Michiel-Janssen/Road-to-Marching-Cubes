@@ -6,7 +6,7 @@ namespace CoffeeBytes.Week3
 {
     public static class Noise
     {
-        public static Texture2D GenerateVegetationTexture(int mapWidth, int mapHeight, float scale, float vegetationPercentage, int seed, Vector2 offset)
+        public static Texture2D GenerateVegetationTexture(int mapWidth, int mapHeight, float scale, int seed, Vector2 offset)
         {
             Texture2D texture = new Texture2D(mapWidth, mapHeight);
             System.Random prng = new System.Random(seed);
@@ -17,9 +17,8 @@ namespace CoffeeBytes.Week3
             {
                 for (int x = 0; x < mapWidth; x++)
                 {
-                    float sample = Mathf.PerlinNoise((x + offsetX) / scale, (y + offsetY) / scale);
-                    Color color = (sample > 1 - vegetationPercentage) ? Color.white : Color.black;
-                    texture.SetPixel(x, y, color);
+                    float sample = Mathf.PerlinNoise((x + offsetX) / mapWidth * scale, (y + offsetY) / mapHeight * scale);
+                    texture.SetPixel(x, y, new Color(0, sample, 0));
                 }
             }
 
