@@ -6,16 +6,15 @@ namespace CoffeeBytes.Week3
 {
     public static class PoissonDiscSampling
     {
-        public static List<Vector2> GeneratePoints(float radius, Vector2 sampleRegionSize, Texture2D vegetationNoiseTexture, bool withNoise, AnimationCurve density, int numSamplesBeforeRejection = 30)
+        public static List<Vector2> GeneratePoints(float radius, Vector2 sampleRegionSize, Texture2D vegetationNoiseTexture, AnimationCurve densityCurve, int numSamplesBeforeRejection = 30)
         {
-            // Get the noise map 
             float cellSize = radius / Mathf.Sqrt(2);
 
             int[,] grid = new int[Mathf.CeilToInt(sampleRegionSize.x / cellSize), Mathf.CeilToInt(sampleRegionSize.y / cellSize)];
             List<Vector2> points = new List<Vector2>();
             List<Vector2> spawnPoints = new List<Vector2>();
 
-            if(!withNoise)
+            if(vegetationNoiseTexture == null)
             {
                 spawnPoints.Add(sampleRegionSize / 2);
             }
@@ -42,7 +41,7 @@ namespace CoffeeBytes.Week3
                     Vector2 dir = new Vector2(Mathf.Sin(angle), Mathf.Cos(angle));
                     Vector2 candidate = spawnCentre + dir * Random.Range(radius, 2 * radius);
 
-                    if (IsValid(candidate, sampleRegionSize, cellSize, radius, points, grid, vegetationNoiseTexture, withNoise, density))
+                    if (IsValid(candidate, sampleRegionSize, cellSize, radius, points, grid, vegetationNoiseTexture, densityCurve))
                     {
                         points.Add(candidate);
                         spawnPoints.Add(candidate);
@@ -61,7 +60,7 @@ namespace CoffeeBytes.Week3
             return points;
         }
 
-        static bool IsValid(Vector2 candidate, Vector2 sampleRegionSize, float cellSize, float radius, List<Vector2> points, int[,] grid, Texture2D vegetationNoiseTexture, bool withNoise, AnimationCurve densityCurve)
+        static bool IsValid(Vector2 candidate, Vector2 sampleRegionSize, float cellSize, float radius, List<Vector2> points, int[,] grid, Texture2D vegetationNoiseTexture, AnimationCurve densityCurve)
         {
             if (candidate.x >= 0 && candidate.x < sampleRegionSize.x && candidate.y >= 0 && candidate.y < sampleRegionSize.y)
             {
@@ -88,7 +87,7 @@ namespace CoffeeBytes.Week3
                     }
                 }
 
-                if (withNoise)
+                if (vegetationNoiseTexture != null)
                 {
                     Vector2 pixelUV = new Vector2(candidate.x / sampleRegionSize.x, candidate.y / sampleRegionSize.y);
                     float noiseValue = vegetationNoiseTexture.GetPixelBilinear(pixelUV.x, pixelUV.y).g;

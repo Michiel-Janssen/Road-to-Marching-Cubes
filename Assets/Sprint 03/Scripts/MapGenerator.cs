@@ -17,7 +17,7 @@ namespace CoffeeBytes.Week3
 
         private void Start()
         {
-            placementGenerator.GenerateTrees();
+            placementGenerator.GenerateTrees(vegetationData);
             //placementGenerator.PlaceObjects();
         }
     }
