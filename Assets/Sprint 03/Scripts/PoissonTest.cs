@@ -1,4 +1,4 @@
-using System.Collections;
+/*using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
 
@@ -23,7 +23,7 @@ namespace CoffeeBytes.Week3
         private void OnValidate()
         {
             vegetationNoiseTexture = GenerateVegetationTexture(100, 100, 40, 0.55f, 2, new Vector2(0, 0));
-            points = PoissonDiscSampling.GeneratePoints(radius, regionSize, vegetationNoiseTexture, withNoise, rejectionSamples);
+            points = PoissonDiscSampling.GeneratePoints(radius, regionSize, vegetationNoiseTexture, withNoise, density, rejectionSamples);
             textureRenderer.sharedMaterial.mainTexture = vegetationNoiseTexture;
             textureRenderer.transform.localScale = new Vector3(vegetationNoiseTexture.width, 1, vegetationNoiseTexture.height);
         }
@@ -68,3 +68,4 @@ namespace CoffeeBytes.Week3
         }
     }
 }
+*/

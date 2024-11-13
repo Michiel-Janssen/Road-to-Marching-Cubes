@@ -6,7 +6,7 @@ namespace CoffeeBytes.Week3
 {
     public static class PoissonDiscSampling
     {
-        public static List<Vector2> GeneratePoints(float radius, Vector2 sampleRegionSize, Texture2D vegetationNoiseTexture, bool withNoise, float density, int numSamplesBeforeRejection = 30)
+        public static List<Vector2> GeneratePoints(float radius, Vector2 sampleRegionSize, Texture2D vegetationNoiseTexture, bool withNoise, AnimationCurve density, int numSamplesBeforeRejection = 30)
         {
             // Get the noise map 
             float cellSize = radius / Mathf.Sqrt(2);
@@ -25,11 +25,7 @@ namespace CoffeeBytes.Week3
                 {
                     for (int y = 0; y < vegetationNoiseTexture.height; y++)
                     {
-                        float pixelColor = vegetationNoiseTexture.GetPixel(x, y).g;
-                        if (pixelColor > density)
-                        {
-                            spawnPoints.Add(new Vector2(x, y));
-                        }
+                        spawnPoints.Add(new Vector2(x, y));
                     }
                 }
             }
@@ -65,7 +61,7 @@ namespace CoffeeBytes.Week3
             return points;
         }
 
-        static bool IsValid(Vector2 candidate, Vector2 sampleRegionSize, float cellSize, float radius, List<Vector2> points, int[,] grid, Texture2D vegetationNoiseTexture, bool withNoise, float noiseThreshold)
+        static bool IsValid(Vector2 candidate, Vector2 sampleRegionSize, float cellSize, float radius, List<Vector2> points, int[,] grid, Texture2D vegetationNoiseTexture, bool withNoise, AnimationCurve densityCurve)
         {
             if (candidate.x >= 0 && candidate.x < sampleRegionSize.x && candidate.y >= 0 && candidate.y < sampleRegionSize.y)
             {
@@ -76,7 +72,6 @@ namespace CoffeeBytes.Week3
                 int searchStartY = Mathf.Max(0, cellY - 2);
                 int searchEndY = Mathf.Min(cellY + 2, grid.GetLength(1) - 1);
 
-                // Check against neighboring points to ensure minimum radius
                 for (int x = searchStartX; x <= searchEndX; x++)
                 {
                     for (int y = searchStartY; y <= searchEndY; y++)
@@ -93,16 +88,19 @@ namespace CoffeeBytes.Week3
                     }
                 }
 
-                // Check noise if enabled
                 if (withNoise)
                 {
                     Vector2 pixelUV = new Vector2(candidate.x / sampleRegionSize.x, candidate.y / sampleRegionSize.y);
-                    float pixelValue = vegetationNoiseTexture.GetPixelBilinear(pixelUV.x, pixelUV.y).g;
-                    if (pixelValue < noiseThreshold)
+                    float noiseValue = vegetationNoiseTexture.GetPixelBilinear(pixelUV.x, pixelUV.y).g;
+
+                    float placementProbability = densityCurve.Evaluate(noiseValue);
+
+                    if (Random.value > placementProbability)
                     {
                         return false;
                     }
                 }
+
                 return true;
             }
             return false;
