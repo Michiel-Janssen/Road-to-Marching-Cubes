@@ -12,12 +12,17 @@ namespace CoffeeBytes.Week3
         [SerializeField] private int rejectionSamples = 30;
         [SerializeField] private float rayStartHeight = 100;
         [SerializeField] private bool withNoise = false;
+        [SerializeField] private bool withRandomRotation = false;
         [SerializeField] private float density;
         [SerializeField] private AnimationCurve densityCurve = AnimationCurve.Linear(0, 0, 1, 1);
+        [SerializeField] private float minSlopeAngle = 0f;
+        [SerializeField] private float maxSlopeAngle = 50f;
+        [SerializeField] private float tiltValue = 5f;
 
         private float rayDist;
         private List<Vector2> points;
         private MapGenerator mapGenerator;
+        private Quaternion treeQuaternion = Quaternion.identity;
 
         private void Awake()
         {
@@ -34,18 +39,38 @@ namespace CoffeeBytes.Week3
             foreach (Vector2 point in points)
             {
                 RaycastHit hit;
-                if (Physics.Raycast(new Vector3(point.x + transform.position.x, rayStartHeight, point.y + transform.position.y), Vector2.down, out hit, rayDist))
+                Vector3 rayOrigin = new Vector3(point.x + transform.position.x, rayStartHeight, point.y + transform.position.y);
+
+                if (Physics.Raycast(rayOrigin, Vector3.down, out hit, rayDist))
                 {
-                    if (hit.transform.tag != "Tree")
+                    float slopeAngle = Vector3.Angle(hit.normal, Vector3.up);
+
+                    if (slopeAngle >= minSlopeAngle && slopeAngle <= maxSlopeAngle)
                     {
-                        foreach (VegetationType type in mapGenerator.vegetationData.vegetationTypes)
+                        if (hit.transform.tag != "Tree")
                         {
-                            Instantiate(type.prefabs[Random.Range(0, type.prefabs.Length - 1)], hit.point, Quaternion.identity, transform);
+                            foreach (VegetationType type in mapGenerator.vegetationData.vegetationTypes)
+                            {
+                                if (withRandomRotation)
+                                {
+                                    treeQuaternion = RandomRotations();
+                                }
+                                Instantiate(type.prefabs[Random.Range(0, type.prefabs.Length)], hit.point, treeQuaternion, transform);
+                            }
                         }
-                        //Instantiate(vegetationData.vegetationTypes[0].prefabs[Random.Range(0, vegetationData.vegetationTypes[0].prefabs.Length -1)], hit.point, Quaternion.identity, this.transform);
                     }
                 }
             }
+        }
+
+        private Quaternion RandomRotations()
+        {
+            float randomYRotation = Random.Range(0f, 360f);
+            float randomXRotation = Random.Range(0f, tiltValue);
+            float randomZRotation = Random.Range(0f, tiltValue);
+
+            Quaternion randomRotation = Quaternion.Euler(randomXRotation, randomYRotation, randomZRotation);
+            return randomRotation;
         }
     }
 }
