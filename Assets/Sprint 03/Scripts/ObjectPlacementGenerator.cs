@@ -6,14 +6,21 @@ namespace CoffeeBytes.Week3
 {
     public class ObjectPlacementGenerator : MonoBehaviour
     {
-        [SerializeField] private GameObject[] trees;
+        [Header("Booleans")]
+        [SerializeField] private bool withNoise = false;
+        [SerializeField] private bool withRandomRotation = false;
+
+        [Space(10)]
+
+        [Header("Poisson Disc Settings")]
         [SerializeField] private float radius = 1f;
         [SerializeField] private Vector2 regionSize = Vector2.one;
         [SerializeField] private int rejectionSamples = 30;
         [SerializeField] private float rayStartHeight = 100;
-        [SerializeField] private bool withNoise = false;
-        [SerializeField] private bool withRandomRotation = false;
-        [SerializeField] private float density;
+
+        [Space(10)]
+
+        [Header("Placement Values")]
         [SerializeField] private AnimationCurve densityCurve = AnimationCurve.Linear(0, 0, 1, 1);
         [SerializeField] private float minSlopeAngle = 0f;
         [SerializeField] private float maxSlopeAngle = 50f;
@@ -47,8 +54,6 @@ namespace CoffeeBytes.Week3
 
                     if (slopeAngle >= minSlopeAngle && slopeAngle <= maxSlopeAngle)
                     {
-                        if (hit.transform.tag != "Tree")
-                        {
                             foreach (VegetationType type in mapGenerator.vegetationData.vegetationTypes)
                             {
                                 if (withRandomRotation)
@@ -57,7 +62,7 @@ namespace CoffeeBytes.Week3
                                 }
                                 Instantiate(type.prefabs[Random.Range(0, type.prefabs.Length)], hit.point, treeQuaternion, transform);
                             }
-                        }
+                        
                     }
                 }
             }
