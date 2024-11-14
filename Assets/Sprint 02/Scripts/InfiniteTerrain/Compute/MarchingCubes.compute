@@ -1,160 +1,81 @@
-#pragma kernel March
-//#pragma kernel UpdateWeights
+﻿#pragma kernel March
+#include "Includes/MarchTables.compute"
 
-#include "..\..\..\..\Common\MarchingTable.hlsl"
-#include "Includes\Metrics.compute"
+static const int numThreads = 8;
 
-struct Triangle
-{
-    float3 a, b, c;
+struct Triangle {
+    float3 vertexC;
+    float3 vertexB;
+    float3 vertexA;
 };
+
 AppendStructuredBuffer<Triangle> triangles;
+RWStructuredBuffer<float4> points;
 
+int numPointsPerAxis;
 float isoLevel;
-float3 _HitPosition;
-float _BrushSize;
-float _TerraformStrength;
 
-
-float3 interpolateVerts(float4 v1, float4 v2)
-{
+float3 interpolateVerts(float4 v1, float4 v2) {
     float t = (isoLevel - v1.w) / (v2.w - v1.w);
-    return v1.xyz + t * (v2.xyz - v1.xyz);
+    return v1.xyz + t * (v2.xyz-v1.xyz);
 }
 
-/*
- * Function to find the exact positon on the edge for this vertex
- */
-float3 interp(float3 edgeVertex1, float valueAtVertex1, float3 edgeVertex2, float valueAtVertex2)
-{
-    return (edgeVertex1 + (isoLevel - valueAtVertex1) * (edgeVertex2 - edgeVertex1) / (valueAtVertex2 - valueAtVertex1));
+int indexFromCoord(int x, int y, int z) {
+    return z * numPointsPerAxis * numPointsPerAxis + y * numPointsPerAxis + x;
 }
-
-[numthreads(numThreads, numThreads, numThreads)]
-void March(uint3 id : SV_DispatchThreadID)
-{
-    /*
-    * Stop always 1 before (5 vertices build 4 squares) otherwise out of bounds
-    */
-    /*
-    if (id.x >= _LODSize - 1 || id.y >= _LODSize - 1 || id.z >= _LODSize - 1)
-    {
+[numthreads(numThreads,numThreads,numThreads)]
+void March (int3 id : SV_DispatchThreadID)
+{   
+    // Stop one point before the end because voxel includes neighbouring points
+    if (id.x >= numPointsPerAxis-1 || id.y >= numPointsPerAxis-1 || id.z >= numPointsPerAxis-1) {
         return;
     }
-    */
-    
-    if (id.x >= pointsPerChunk - 1 || id.y >= pointsPerChunk - 1 || id.z >= pointsPerChunk - 1)
-    {
-        return;
-    }
-    
-    
-    /*
-    * Noise value of the corners of the cube
-    */
-    /*
-    float3 samplePos = id * _LodScaleFactor;
 
-    float unit = 1 * _LodScaleFactor;
+    // 8 corners of the current cube
+    float4 cubeCorners[8] = {
+        points[indexFromCoord(id.x, id.y, id.z)],
+        points[indexFromCoord(id.x + 1, id.y, id.z)],
+        points[indexFromCoord(id.x + 1, id.y, id.z + 1)],
+        points[indexFromCoord(id.x, id.y, id.z + 1)],
+        points[indexFromCoord(id.x, id.y + 1, id.z)],
+        points[indexFromCoord(id.x + 1, id.y + 1, id.z)],
+        points[indexFromCoord(id.x + 1, id.y + 1, id.z + 1)],
+        points[indexFromCoord(id.x, id.y + 1, id.z + 1)]
+    };
 
-    float cubeValues[8] =
-    {
-       weight[indexFromCoord(samplePos.x, samplePos.y, samplePos.z + unit)],
-       weight[indexFromCoord(samplePos.x + unit, samplePos.y, samplePos.z + unit)],
-       weight[indexFromCoord(samplePos.x + unit, samplePos.y, samplePos.z)],
-       weight[indexFromCoord(samplePos.x, samplePos.y, samplePos.z)],
-       weight[indexFromCoord(samplePos.x, samplePos.y + unit, samplePos.z + unit)],
-       weight[indexFromCoord(samplePos.x + unit, samplePos.y + unit, samplePos.z + unit)],
-       weight[indexFromCoord(samplePos.x + unit, samplePos.y + unit, samplePos.z)],
-       weight[indexFromCoord(samplePos.x, samplePos.y + unit, samplePos.z)]
-    };
-    */
-    float4 cubeValues[8] =
-    {
-        weight[indexFromCoord(id.x, id.y, id.z)],
-        weight[indexFromCoord(id.x + 1, id.y, id.z)],
-        weight[indexFromCoord(id.x + 1, id.y, id.z + 1)],
-        weight[indexFromCoord(id.x, id.y, id.z + 1)],
-        weight[indexFromCoord(id.x, id.y + 1, id.z)],
-        weight[indexFromCoord(id.x + 1, id.y + 1, id.z)],
-        weight[indexFromCoord(id.x + 1, id.y + 1, id.z + 1)],
-        weight[indexFromCoord(id.x, id.y + 1, id.z + 1)]
-    };
-    
-    /*
-    * Cube configuration
-    */
+    // Calculate unique index for each cube configuration.
+    // There are 256 possible values
+    // A value of 0 means cube is entirely inside surface; 255 entirely outside.
+    // The value is used to look up the edge table, which indicates which edges of the cube are cut by the isosurface.
     int cubeIndex = 0;
-    if (cubeValues[0].w < isoLevel)
-        cubeIndex |= 1;
-    if (cubeValues[1].w < isoLevel)
-        cubeIndex |= 2;
-    if (cubeValues[2].w < isoLevel)
-        cubeIndex |= 4;
-    if (cubeValues[3].w < isoLevel)
-        cubeIndex |= 8;
-    if (cubeValues[4].w < isoLevel)
-        cubeIndex |= 16;
-    if (cubeValues[5].w < isoLevel)
-        cubeIndex |= 32;
-    if (cubeValues[6].w < isoLevel)
-        cubeIndex |= 64;
-    if (cubeValues[7].w < isoLevel)
-        cubeIndex |= 128;
-    
-    /*
-    * Indexes of the triangles
-    */
-    int edges[] = triTable[cubeIndex];
-    
-    /*
-    * Edges between the triangle indexes, interp to find exact spot on the edge, add to list
-    */
-    for (int i = 0; edges[i] != -1; i += 3)
-    {
-        // First edge lies between vertex e00 and vertex e01
-        int e00 = edgeConnections[edges[i]][0];
-        int e01 = edgeConnections[edges[i]][1];
+    if (cubeCorners[0].w < isoLevel) cubeIndex |= 1;
+    if (cubeCorners[1].w < isoLevel) cubeIndex |= 2;
+    if (cubeCorners[2].w < isoLevel) cubeIndex |= 4;
+    if (cubeCorners[3].w < isoLevel) cubeIndex |= 8;
+    if (cubeCorners[4].w < isoLevel) cubeIndex |= 16;
+    if (cubeCorners[5].w < isoLevel) cubeIndex |= 32;
+    if (cubeCorners[6].w < isoLevel) cubeIndex |= 64;
+    if (cubeCorners[7].w < isoLevel) cubeIndex |= 128;
 
-        // Second edge lies between vertex e10 and vertex e11
-        int e10 = edgeConnections[edges[i + 1]][0];
-        int e11 = edgeConnections[edges[i + 1]][1];
-        
-        // Third edge lies between vertex e20 and vertex e21
-        int e20 = edgeConnections[edges[i + 2]][0];
-        int e21 = edgeConnections[edges[i + 2]][1];
-        
+    // Create triangles for current cube configuration
+    for (int i = 0; triangulation[cubeIndex][i] != -1; i +=3) {
+        // Get indices of corner points A and B for each of the three edges
+        // of the cube that need to be joined to form the triangle.
+        int a0 = cornerIndexAFromEdge[triangulation[cubeIndex][i]];
+        int b0 = cornerIndexBFromEdge[triangulation[cubeIndex][i]];
+
+        int a1 = cornerIndexAFromEdge[triangulation[cubeIndex][i+1]];
+        int b1 = cornerIndexBFromEdge[triangulation[cubeIndex][i+1]];
+
+        int a2 = cornerIndexAFromEdge[triangulation[cubeIndex][i+2]];
+        int b2 = cornerIndexBFromEdge[triangulation[cubeIndex][i+2]];
+
         Triangle tri;
-        /*
-        tri.a = (interp(cornerOffsets[e00], cubeValues[e00], cornerOffsets[e01], cubeValues[e01]) + id) / (_LODSize - 1) * _Scale;
-        tri.b = (interp(cornerOffsets[e10], cubeValues[e10], cornerOffsets[e11], cubeValues[e11]) + id) / (_LODSize - 1) * _Scale;
-        tri.c = (interp(cornerOffsets[e20], cubeValues[e20], cornerOffsets[e21], cubeValues[e21]) + id) / (_LODSize - 1) * _Scale;
-*/
-        /*
-        tri.a = (interp(cornerOffsets[e00], cubeValues[e00].w, cornerOffsets[e01], cubeValues[e01].w) + id);
-        tri.b = (interp(cornerOffsets[e10], cubeValues[e10].w, cornerOffsets[e11], cubeValues[e11].w) + id);
-        tri.c = (interp(cornerOffsets[e20], cubeValues[e20].w, cornerOffsets[e21], cubeValues[e21].w) + id);
-*/
-        tri.a = interpolateVerts(cubeValues[e00], cubeValues[e01]);
-        tri.b = interpolateVerts(cubeValues[e10], cubeValues[e11]);
-        tri.c = interpolateVerts(cubeValues[e20], cubeValues[e21]);
+        tri.vertexA = interpolateVerts(cubeCorners[a0], cubeCorners[b0]);
+        tri.vertexB = interpolateVerts(cubeCorners[a1], cubeCorners[b1]);
+        tri.vertexC = interpolateVerts(cubeCorners[a2], cubeCorners[b2]);
         triangles.Append(tri);
     }
-}
 
 
-/*
-[numthreads(numThreads, numThreads, numThreads)]
-void UpdateWeights(uint3 id : SV_DispatchThreadID)
-{
-    if (id.x >= pointsPerChunk - 1 || id.y >= pointsPerChunk - 1 || id.z >= pointsPerChunk - 1)
-    {
-        return;
-    }
-    
-    if (distance((float3(id) / (pointsPerChunk - 1) * _Scale), _HitPosition) <= _BrushSize)
-    {
-        weight[indexFromCoord(id.x, id.y, id.z)] += _TerraformStrength;
-    }
 }
-*/
