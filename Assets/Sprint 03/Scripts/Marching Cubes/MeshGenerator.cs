@@ -7,9 +7,6 @@ namespace CoffeeBytes.Week3
     [ExecuteInEditMode]
     public class MeshGenerator : MonoBehaviour
     {
-        [Range(0, 4)]
-        public int LOD;
-
         [Header("General Settings")]
         public DensityGenerator densityGenerator;
 
@@ -18,6 +15,7 @@ namespace CoffeeBytes.Week3
         public Transform viewer;
 
         public bool fixedMapSize;
+        public bool singleLayerMap;
 
         [Space()]
 
@@ -158,7 +156,10 @@ namespace CoffeeBytes.Week3
 
             for (int x = -maxChunksInView; x <= maxChunksInView; x++)
             {
-                for (int y = -maxChunksInView; y <= maxChunksInView; y++)
+                int minY = singleLayerMap ? 0 : -maxChunksInView;
+                int maxY = singleLayerMap ? 0 : maxChunksInView;
+
+                for (int y = -minY; y <= maxY; y++)
                 {
                     for (int z = -maxChunksInView; z <= maxChunksInView; z++)
                     {
@@ -353,7 +354,10 @@ namespace CoffeeBytes.Week3
 
             for (int x = 0; x < numChunks.x; x++)
             {
-                for (int y = 0; y < numChunks.y; y++)
+                int minY = singleLayerMap ? 0 : 0;
+                int maxY = singleLayerMap ? 0 : numChunks.y - 1;
+
+                for (int y = minY; y < maxY; y++)
                 {
                     for (int z = 0; z < numChunks.z; z++)
                     {

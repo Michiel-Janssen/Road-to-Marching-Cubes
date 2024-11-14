@@ -7,9 +7,6 @@ namespace CoffeeBytes
     [ExecuteInEditMode]
     public class MeshGenerator : MonoBehaviour
     {
-        [Range(0, 4)]
-        public int LOD;
-
         [Header("General Settings")]
         public DensityGenerator densityGenerator;
 
@@ -18,6 +15,7 @@ namespace CoffeeBytes
         public Transform viewer;
 
         public bool fixedMapSize;
+
 
         [Space()]
 
