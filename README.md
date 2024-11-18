@@ -17,6 +17,9 @@ It started with basic understanding of the marching cube algorithm and implement
 Week 2:
 I went to implement an infinite generation system. So now I achieved a fixed and infinite generation system. I am not yet happy with the noise so I will be working on that. Because of pc issues I stopped working on this for now and start learning about shader graphs and HLSL code. My idea is to prototype in shader graph and then later when I am happy to write it in HLSL myself for optimization purposes. My current code for this watershader is for now on this repo (https://github.com/Michiel-Janssen/Water-Shader).
 
+Week 3:
+After struggling another week with a worst laptop, I finally got mine back and could work faster again. I developed a scalable system to procedurally place vegatation on my terrain using the poisson disc sampling algortihm. I also used the Unity scriptable objects to give each type of vegatation some different properties. For example, adding noise or tilt to my vegetation type to get more randomised vegetation. It is also possible now to generate multiple vegetation types at once. Secondly, I changed some noise properties for my terrain generation so I now have more realistic terrain. Lastly, I developed a heightbased shader with textures to texture my terrain.
+
 ## Resources
 Below is a list of papers, articles, and websites that have helped me throughout this journey:
 
@@ -29,5 +32,6 @@ Below is a list of papers, articles, and websites that have helped me throughout
 - **catlikecoding, Computing Shaders**: https://catlikecoding.com/unity/tutorials/basics/compute-shaders/
 - **Unity docs shader graph**: https://docs.unity3d.com/6000.0/Documentation/Manual/shader-graph.html
 - **Habib's water shader**: https://enjoyphysics.cn/%E6%96%87%E4%BB%B6/soft/Water/thesis.pdf
+- **Poisson disc sampling**: https://gameidea.org/2023/12/27/poisson-disk-sampling/
 
 Feel free to browse through the resources and explore the code examples within the repository as I continue my progress toward mastering Marching Cubes.
