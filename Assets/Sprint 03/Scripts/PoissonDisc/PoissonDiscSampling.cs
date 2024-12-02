@@ -14,7 +14,7 @@ namespace CoffeeBytes.Week3
             List<Vector2> points = new List<Vector2>();
             List<Vector2> spawnPoints = new List<Vector2>();
 
-            if(vegetationNoiseTexture == null)
+            if (vegetationNoiseTexture == null)
             {
                 spawnPoints.Add(sampleRegionSize / 2);
             }

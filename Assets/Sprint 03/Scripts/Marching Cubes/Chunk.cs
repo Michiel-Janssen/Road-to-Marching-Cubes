@@ -80,5 +80,17 @@ namespace CoffeeBytes.Week3
 
             meshRenderer.material = mat;
         }
+
+        public Vector2 GetSize()
+        {
+            if (mesh == null)
+            {
+                return Vector2.zero;
+            }
+
+            Bounds bounds = mesh.bounds;
+
+            return new Vector2(bounds.size.x, bounds.size.z);
+        }
     }
 }

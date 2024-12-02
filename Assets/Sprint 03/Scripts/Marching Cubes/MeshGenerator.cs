@@ -1,3 +1,4 @@
+using System;
 using System.Collections;
 using System.Collections.Generic;
 using UnityEngine;
@@ -15,7 +16,6 @@ namespace CoffeeBytes.Week3
         public Transform viewer;
 
         public bool fixedMapSize;
-        public bool singleLayerMap;
 
         [Space()]
 
@@ -41,6 +41,8 @@ namespace CoffeeBytes.Week3
         List<Chunk> chunks;
         Dictionary<Vector3Int, Chunk> existingChunks;
         Queue<Chunk> recycleableChunks;
+
+        //public MapGenerator mapGenerator;
 
         struct Triangle
         {
@@ -94,7 +96,6 @@ namespace CoffeeBytes.Week3
 
             if (settingsUpdated)
             {
-                Debug.Log("Updating mesh");
                 RequestMeshUpdate();
                 settingsUpdated = false;
             }
@@ -156,10 +157,7 @@ namespace CoffeeBytes.Week3
 
             for (int x = -maxChunksInView; x <= maxChunksInView; x++)
             {
-                int minY = singleLayerMap ? 0 : -maxChunksInView;
-                int maxY = singleLayerMap ? 0 : maxChunksInView;
-
-                for (int y = -minY; y <= maxY; y++)
+                for (int y = -maxChunksInView; y <= maxChunksInView; y++)
                 {
                     for (int z = -maxChunksInView; z <= maxChunksInView; z++)
                     {
@@ -217,14 +215,18 @@ namespace CoffeeBytes.Week3
         {
             foreach(Chunk chunk in chunks)
             {
-                Debug.Log($"Updating this chunk = {chunk}");
                 UpdateChunkMesh(chunk);
+                //UpdateChunkVegetation(chunk);
             }
         }
 
+/*        private void UpdateChunkVegetation(Chunk chunk)
+        {
+            mapGenerator.PlaceVegetation(chunk);
+        }*/
+
         public void RequestMeshUpdate()
         {
-            Debug.Log("Requesting mesh update...");
             if ((Application.isPlaying && autoUpdateInGame) || (!Application.isPlaying && autoUpdateInEditor))
             {
                 Run();
@@ -247,8 +249,6 @@ namespace CoffeeBytes.Week3
             Vector3 worldBounds = new Vector3(numChunks.x, numChunks.y, numChunks.z) * boundsSize;
 
             densityGenerator.Generate(_weightsBuffer, GridMetrics.PointsPerChunk(GridMetrics.LastLod), boundsSize, worldBounds, centre, offset, pointSpacing);
-
-            Debug.Log("Density generated for chunk at coordinates: " + coord);
             //float lodScaleFactor = ((float)GridMetrics.PointsPerChunk(GridMetrics.LastLod) + 1) / (float)GridMetrics.PointsPerChunk(LOD);
 
             _trianglesBuffer.SetCounterValue(0);
@@ -265,18 +265,15 @@ namespace CoffeeBytes.Week3
             //marchingShader.SetInt("_Scale", GridMetrics.Scale);
             marchingShader.SetFloat("isoLevel", isoLevel);
 
-            Debug.Log("Dispatching marching compute shader");
             marchingShader.Dispatch(kernelIndex, numThreadsPerAxis, numThreadsPerAxis, numThreadsPerAxis);
 
             ComputeBuffer.CopyCount(_trianglesBuffer, _trianglesCountBuffer, 0);
             int[] triCountArray = { 0 };
             _trianglesCountBuffer.GetData(triCountArray);
             int numTris = triCountArray[0];
-            Debug.Log("Number of triangles generated: " + numTris);
 
             Triangle[] tris = new Triangle[numTris];
             _trianglesBuffer.GetData(tris, 0, 0, numTris);
-            Debug.Log("Triangles buffer data length: " + tris.Length);
 
             Mesh mesh = chunk.mesh;
             mesh.Clear();
@@ -291,10 +288,6 @@ namespace CoffeeBytes.Week3
                     meshTriangles[i * 3 + j] = i * 3 + j;
                     vertices[i * 3 + j] = tris[i][j];
                 }
-            }
-            for (int i = 0; i < Mathf.Min(10, vertices.Length); i++)
-            {
-                Debug.Log("Vertex " + i + ": " + vertices[i]);
             }
 
             mesh.vertices = vertices;
@@ -326,7 +319,6 @@ namespace CoffeeBytes.Week3
         void CreateBuffers()
         {
             int numPoints = GridMetrics.PointsPerChunk(GridMetrics.LastLod) * GridMetrics.PointsPerChunk(GridMetrics.LastLod) * GridMetrics.PointsPerChunk(GridMetrics.LastLod);
-            Debug.Log($"Amount of numPoints = {numPoints}");
             int numVoxelsPerAxis = GridMetrics.PointsPerChunk(GridMetrics.LastLod) - 1;
             int numVoxels = numVoxelsPerAxis * numVoxelsPerAxis * numVoxelsPerAxis;
             int maxTriangleCount = numVoxels * 5;
@@ -337,12 +329,9 @@ namespace CoffeeBytes.Week3
                 {
                     ReleaseBuffers();
                 }
-                Debug.Log($"Size of the triangle {Triangle.SizeOf}");
                 _trianglesBuffer = new ComputeBuffer(maxTriangleCount, Triangle.SizeOf, ComputeBufferType.Append);
                 _weightsBuffer = new ComputeBuffer(numPoints, sizeof(float) * 4);
                 _trianglesCountBuffer = new ComputeBuffer(1, sizeof(int), ComputeBufferType.Raw);
-
-                Debug.Log("Created the buffers");
             }
         }
 
@@ -354,10 +343,7 @@ namespace CoffeeBytes.Week3
 
             for (int x = 0; x < numChunks.x; x++)
             {
-                int minY = singleLayerMap ? 0 : 0;
-                int maxY = singleLayerMap ? 0 : numChunks.y - 1;
-
-                for (int y = minY; y < maxY; y++)
+                for (int y = 0; y < numChunks.y; y++)
                 {
                     for (int z = 0; z < numChunks.z; z++)
                     {
@@ -395,7 +381,6 @@ namespace CoffeeBytes.Week3
         Chunk CreateChunk(Vector3Int coord)
         {
             GameObject chunk = new GameObject($"Chunk ({coord.x}, {coord.y}, {coord.z})");
-            Debug.Log($"Chunk at {CentreFromCoord(coord)} created");
             chunk.transform.SetParent(chunkHolder.transform);
             Chunk newChunk = chunk.AddComponent<Chunk>();
             newChunk.coord = coord;
